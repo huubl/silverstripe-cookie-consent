@@ -1,6 +1,6 @@
 <?php
 
-namespace Broarm\CookieConsent;
+namespace Broarm\CookieConsent\Model;
 
 use \Page;
 use Broarm\CookieConsent\CookieConsent;
@@ -8,14 +8,14 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\DB;
 
 /**
- * Model for creating a default privacy policy page
+ * Model for creating a default terms and conditions page
  *
  * @package Broarm
  * @subpackage CookieConsent
  */
-class PrivacyPolicyPage extends Page
+class TermsAndConditionsPage extends Page
 {
-    private static $table_name = 'PrivacyPolicyPage';
+    private static $table_name = 'TermsAndConditionsPage';
 
     private static $defaults = array(
         'ShowInMenus' => 0
@@ -23,8 +23,8 @@ class PrivacyPolicyPage extends Page
 
     public function populateDefaults()
     {
-        $this->Title = _t(__CLASS__ . '.Title', 'Privacy Policy');
-        $this->Content = _t(__CLASS__ .'.Content', '<p>Default privacy policy</p>');
+        $this->Title = _t(__CLASS__ . '.Title', 'Terms and Conditions');
+        $this->Content = _t(__CLASS__ .'.Content', '<p>Default terms and conditions</p>');
         parent::populateDefaults();
     }
 
@@ -38,7 +38,7 @@ class PrivacyPolicyPage extends Page
             $page = self::create();
             $page->write();
             $page->flushCache();
-            DB::alteration_message('Privacy Policy page created', 'created');
+            DB::alteration_message('Terms and Conditions page created', 'created');
         }
     }
 }

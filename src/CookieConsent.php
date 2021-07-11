@@ -2,6 +2,7 @@
 
 namespace Broarm\CookieConsent;
 
+use Broarm\CookieConsent\Model\CookieGroup;
 use Exception;
 use SilverStripe\Control\Director;
 use SilverStripe\Core\Config\Config;
@@ -39,6 +40,8 @@ class CookieConsent
     private static $include_css = true;
 
     private static $create_default_pages = true;
+    
+    private static $xhr_mode = false;
 
     /**
      * Check if there is consent for the given cookie
@@ -130,7 +133,8 @@ class CookieConsent
     public static function setConsent($consent)
     {
         $consent = array_filter(array_unique(array_merge($consent, self::config()->get('required_groups'))));
-        Cookie::set(CookieConsent::COOKIE_NAME, implode(',', $consent), 90, null, null, false, false);
+        $domain = self::config()->get('domain') ?: null;
+        Cookie::set(CookieConsent::COOKIE_NAME, implode(',', $consent), 730, null, $domain, false, false);
     }
 
     /**

@@ -1,7 +1,10 @@
 <?php
 
-namespace Broarm\CookieConsent;
+namespace Broarm\CookieConsent\Extensions;
 
+use Broarm\CookieConsent\CookieConsent;
+use Broarm\CookieConsent\Control\CookiePolicyPageController;
+use Broarm\CookieConsent\Model\CookiePolicyPage;
 use Exception;
 use SilverStripe\CMS\Controllers\ContentController;
 use SilverStripe\Core\Extension;
@@ -29,7 +32,7 @@ class ContentControllerExtension extends Extension
      */
     public function onAfterInit()
     {
-        if (!($this->owner instanceof Security) && Config::inst()->get(CookieConsent::class, 'include_css')) {
+        if ($this->CookieConsentIsInXHRMode() || !($this->owner instanceof Security) && Config::inst()->get(CookieConsent::class, 'include_css') && !CookieConsent::check()) {
             $module = ModuleLoader::getModule('bramdeleeuw/cookieconsent');
             Requirements::css($module->getResource('css/cookieconsent.css')->getRelativePath());
         }
@@ -48,6 +51,14 @@ class ContentControllerExtension extends Extension
     }
 
     /**
+     * Check if cookie consent is in XHR mode
+     */
+    public function CookieConsentIsInXHRMode()
+    {
+        return CookieConsent::config()->get('xhr_mode');
+    }
+    
+    /**
      * Check if we can promt for concent
      * We're not on a Securty or Cooky policy page and have no concent set
      *
@@ -55,9 +66,13 @@ class ContentControllerExtension extends Extension
      */
     public function PromptCookieConsent()
     {
-        $securiy = $this->owner instanceof Security;
-        $cookiePolicy = $this->owner instanceof CookiePolicyPageController;
-        return !$securiy && !$cookiePolicy && !CookieConsent::check();
+        $controller = Controller::curr();
+        $securiy = $controller ? $controller instanceof Security : false;
+        $cookiePolicy = $controller ? $controller instanceof CookiePolicyPageController : false;
+        $hasConsent = CookieConsent::check();
+        $prompt = !$securiy && !$cookiePolicy && !$hasConsent;
+        $this->owner->extend('updatePromptCookieConsent', $prompt);
+        return $prompt;
     }
 
     /**
@@ -78,8 +93,14 @@ class ContentControllerExtension extends Extension
         $url = $this->owner->getBackURL()
             ?: $this->owner->getReturnReferer()
                 ?: Director::baseURL();
+
         $cachebust = uniqid();
-        $url = Director::absoluteURL("$url?acceptCookies=$cachebust");
+        if (parse_url($url, PHP_URL_QUERY)) {
+            $url = Director::absoluteURL("$url&acceptCookies=$cachebust");
+        } else {
+            $url = Director::absoluteURL("$url?acceptCookies=$cachebust");
+        }
+
         $this->owner->redirect($url);
     }
 

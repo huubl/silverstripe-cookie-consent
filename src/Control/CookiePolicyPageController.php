@@ -1,9 +1,12 @@
 <?php
 
-namespace Broarm\CookieConsent;
+namespace Broarm\CookieConsent\Control;
 
+use Broarm\CookieConsent\CookieConsent;
 use \PageController;
-use Broarm\CookieConsent\CookieConsentForm;
+use Broarm\CookieConsent\Forms\CookieConsentForm;
+use SilverStripe\Control\HTTPRequest;
+use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Manifest\ModuleLoader;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\View\Requirements;
@@ -26,11 +29,11 @@ class CookiePolicyPageController extends PageController
     public function init()
     {
         parent::init();
-        Requirements::block(
-            ModuleLoader::getModule('bramdeleeuw/cookieconsent')
-                ->getResource('javascript/dist/cookieconsentpopup.js')
-                ->getRelativePath()
-        );
+        $module = ModuleLoader::getModule('bramdeleeuw/cookieconsent');
+        Requirements::block($module->getResource('javascript/dist/cookieconsentpopup.js')->getRelativePath());
+        if (Config::inst()->get(CookieConsent::class, 'include_css')) {
+            Requirements::css($module->getResource('css/cookieconsent.css')->getRelativePath());
+        }
     }
 
     /**
@@ -42,7 +45,7 @@ class CookiePolicyPageController extends PageController
      *
      * @return array
      */
-    public function index()
+    public function index(HTTPRequest $request)
     {
         if ($this->Content && $form = $this->Form()) {
             $hasLocation = stristr($this->Content, '$CookieConsentForm');
